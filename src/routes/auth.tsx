@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
+
 
 const searchSchema = z.object({
   mode: z.enum(["login", "signup", "forgot"]).optional().default("login"),
@@ -80,22 +80,24 @@ function AuthPage() {
     });
   }, [destination, navigate]);
 
-  async function handleGoogle() {
+ async function handleGoogle() {
     setBusy(true);
     try {
       if (destination !== "/dashboard") {
         sessionStorage.setItem("siwes:redirect", destination);
       }
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}${destination}`,
+        },
       });
-      if (result.error) {
-        toast.error(result.error.message ?? "Google sign-in failed");
+      if (error) {
+        toast.error(error.message ?? "Google sign-in failed");
         setBusy(false);
-        return;
       }
-      if (result.redirected) return;
-      navigate({ to: destination, replace: true });
+      // On success, Supabase redirects the browser to Google automatically —
+      // nothing else to do here.
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Google sign-in failed");
       setBusy(false);
