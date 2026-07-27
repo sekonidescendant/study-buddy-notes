@@ -2,15 +2,14 @@
  * AI report-writing service.
  *
  * This is the ONLY module that knows which AI provider is used. To move from
- * Gemini to OpenAI (or any other model) change `REPORT_MODEL` below — nothing
- * else in the codebase needs to be touched.
+ * Gemini to another model, change `REPORT_MODEL` below — nothing else in the
+ * codebase needs to be touched.
  */
 import { generateText } from "ai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
 
-import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-
-// Google Gemini, served through the Lovable AI Gateway.
-const REPORT_MODEL = "google/gemini-3.6-flash";
+// Google Gemini, called directly with your own Google AI Studio API key.
+const REPORT_MODEL = "gemini-flash-latest";
 
 export type SiwesReportType = "daily" | "weekly" | "monthly";
 
@@ -53,16 +52,16 @@ export async function generateSiwesReport(input: {
   reportType: SiwesReportType;
   notes: string;
 }): Promise<string> {
-  const apiKey = process.env.LOVABLE_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    throw new AiServiceError("The AI service is not configured. Please contact support.", 500);
+    throw new AiServiceError("The AI service is not configured. Missing GEMINI_API_KEY.", 500);
   }
 
-  const gateway = createLovableAiGatewayProvider(apiKey);
+  const google = createGoogleGenerativeAI({ apiKey });
 
   try {
     const { text } = await generateText({
-      model: gateway(REPORT_MODEL),
+      model: google(REPORT_MODEL),
       system: SIWES_SYSTEM_PROMPT,
       prompt: [
         `Department: ${input.department}`,
@@ -84,8 +83,8 @@ export async function generateSiwesReport(input: {
     if (message.includes("429")) {
       throw new AiServiceError("Too many requests right now. Please wait a moment and try again.", 429);
     }
-    if (message.includes("402")) {
-      throw new AiServiceError("AI credits have been exhausted. Please contact the administrator.", 402);
+    if (message.includes("402") || message.includes("RESOURCE_EXHAUSTED")) {
+      throw new AiServiceError("AI quota has been exhausted. Please contact the administrator.", 402);
     }
     console.error("[ai-service] generation failed:", message);
     throw new AiServiceError("The report could not be generated. Please try again.", 500);
