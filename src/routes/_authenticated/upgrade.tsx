@@ -61,7 +61,6 @@ function UpgradePage() {
   const { data: payments } = useQuery(paymentsQuery);
   const submit = useServerFn(submitPayment);
 
-  const [transactionRef, setTransactionRef] = useState("");
   const [paymentDate, setPaymentDate] = useState(new Date().toISOString().slice(0, 10));
   const [phone, setPhone] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -91,14 +90,14 @@ function UpgradePage() {
           phone: phone.trim(),
           amount: price,
           payment_date: paymentDate,
-          transaction_ref: transactionRef.trim(),
+          transaction_ref: "N/A",
           screenshot_path: screenshotPath,
         },
       });
     },
     onSuccess: () => {
       toast.success("Payment submitted. We'll verify it shortly.");
-      setTransactionRef("");
+      
       setFile(null);
       queryClient.invalidateQueries({ queryKey: ["my-payments"] });
       queryClient.invalidateQueries({ queryKey: ["account-overview"] });
@@ -199,10 +198,6 @@ function UpgradePage() {
                   <form
                     onSubmit={(event) => {
                       event.preventDefault();
-                      if (transactionRef.trim().length < 3) {
-                        toast.error("Enter the transaction reference from your bank");
-                        return;
-                      }
                       if (phone.trim().length < 6) {
                         toast.error("Enter the phone number you can be reached on");
                         return;
@@ -212,28 +207,15 @@ function UpgradePage() {
                     }}
                     className="space-y-4"
                   >
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="transactionRef">Transaction reference</Label>
-                        <Input
-                          id="transactionRef"
-                          value={transactionRef}
-                          onChange={(event) => setTransactionRef(event.target.value)}
-                          placeholder="e.g. TRF/2024/889201"
-                          maxLength={120}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="paymentDate">Payment date</Label>
-                        <Input
-                          id="paymentDate"
-                          type="date"
-                          value={paymentDate}
-                          onChange={(event) => setPaymentDate(event.target.value)}
-                          required
-                        />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="paymentDate">Payment date</Label>
+                      <Input
+                        id="paymentDate"
+                        type="date"
+                        value={paymentDate}
+                        onChange={(event) => setPaymentDate(event.target.value)}
+                        required
+                      />
                     </div>
 
                     <div className="space-y-2">
