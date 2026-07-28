@@ -285,8 +285,8 @@ function LandingPage() {
                 Pay once, use it till you're done with SIWES
               </h2>
               <p className="mt-3 text-muted-foreground">
-                No subscriptions, no hidden charges. Pay once and use it for your entire SIWES
-                placement.
+                No subscription creeping into your allowance every month. One transfer, and you're set for the whole placement.
+            
               </p>
             </div>
 
