@@ -105,19 +105,18 @@ const STEPS = [
 ];
 const STEPS = [
   {
-    title: "Enter your rough notes",
-    body: "Type what you did in your own words. Bullet points, broken English, shorthand — all fine.",
+    title: "Say what actually happened",
+    body: "Pidgin, half-sentences, no punctuation — doesn't matter. Type it the way it comes to you.",
   },
   {
-    title: "Pick department & report type",
-    body: "Choose your course and whether it's a daily, weekly or monthly entry.",
+    title: "Pick your department and the format",
+    body: "One click. Daily entry or a weekly roll-up.",
   },
   {
-    title: "Copy your polished report",
-    body: "Get a concise, professional entry you can write straight into your logbook.",
+    title: "Copy it into your logbook",
+    body: "That's it. No editing needed, but you can tweak it if you want.",
   },
 ];
-
 const FALLBACK_FAQS = [
   {
     id: "f1",
