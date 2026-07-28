@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient, queryOptions } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Copy, Download, Lock, RefreshCw, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
+import { Camera, X } from "lucide-react";
 
 import { DashboardShell } from "@/components/dashboard-shell";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,39 @@ const REPORT_TYPES = [
   { value: "monthly", label: "Monthly summary", hint: "A month of work, summarised" },
 ] as const;
 
+function compressImage(file: File): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Could not read the image"));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Could not read the image"));
+      img.onload = () => {
+        const MAX_DIMENSION = 1600;
+        let { width, height } = img;
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          const scale = MAX_DIMENSION / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Could not process the image"));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+        resolve({ base64: dataUrl.split(",")[1], mimeType: "image/jpeg" });
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 export const Route = createFileRoute("/_authenticated/generate")({
   head: () => ({
     meta: [
@@ -65,13 +99,22 @@ function GeneratePage() {
   const [notes, setNotes] = useState("");
   const [output, setOutput] = useState("");
   const [copied, setCopied] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageData, setImageData] = useState<{ base64: string; mimeType: string } | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const effectiveDepartment = department || account?.profile.department || "";
   const departments = site?.departments ?? [];
 
   const mutation = useMutation({
-    mutationFn: (vars: { department: string; reportType: typeof reportType; notes: string }) =>
-      generate({ data: vars }),
+    mutationFn: (vars: {
+      department: string;
+      reportType: typeof reportType;
+      notes?: string;
+      imageBase64?: string;
+      imageMimeType?: string;
+    }) => generate({ data: vars }),
     onSuccess: (result) => {
       setOutput(result.output);
       queryClient.invalidateQueries({ queryKey: ["my-reports"] });
@@ -81,6 +124,29 @@ function GeneratePage() {
     onError: (error: Error) => toast.error(error.message),
   });
 
+  async function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    setCompressing(true);
+    try {
+      const compressed = await compressImage(file);
+      setImageData(compressed);
+      setImagePreview(`data:${compressed.mimeType};base64,${compressed.base64}`);
+    } catch {
+      toast.error("Couldn't process that photo, please try another one");
+    }
+    setCompressing(false);
+  }
+
+  function clearImage() {
+    setImageData(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
   if (isLoading || !account) {
     return (
       <DashboardShell title="Generate report">
@@ -135,11 +201,17 @@ function GeneratePage() {
       toast.error("Please select your department");
       return;
     }
-    if (notes.trim().length < 10) {
-      toast.error("Add a bit more detail about what you did");
+    if (notes.trim().length < 10 && !imageData) {
+      toast.error("Add a bit more detail, or upload a photo of your notes");
       return;
     }
-    mutation.mutate({ department: effectiveDepartment, reportType, notes: notes.trim() });
+    mutation.mutate({
+      department: effectiveDepartment,
+      reportType,
+      notes: notes.trim() || undefined,
+      imageBase64: imageData?.base64,
+      imageMimeType: imageData?.mimeType,
+    });
   }
 
   return (
@@ -200,12 +272,49 @@ function GeneratePage() {
                   id="notes"
                   value={notes}
                   onChange={(event) => setNotes(event.target.value)}
-                  rows={9}
+                  rows={7}
                   maxLength={4000}
                   placeholder="e.g. today i help the technician service the generator, we change oil and filter then start am to test"
                   className="resize-none"
                 />
                 <p className="text-right text-xs text-muted-foreground">{notes.length}/4000</p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Or upload a photo of your notes</Label>
+                {imagePreview ? (
+                  <div className="relative overflow-hidden rounded-lg border border-border">
+                    <img src={imagePreview} alt="Your uploaded notes" className="max-h-56 w-full object-contain bg-secondary/30" />
+                    <button
+                      type="button"
+                      onClick={clearImage}
+                      className="absolute right-2 top-2 rounded-full bg-background/90 p-1.5 shadow-sm hover:bg-background"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={compressing}
+                    className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                  >
+                    <Camera className="size-6" />
+                    {compressing ? "Processing photo…" : "Tap to snap or choose a photo"}
+                  </button>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Handwritten or typed, doesn't matter, we'll read it directly from the photo.
+                </p>
               </div>
 
               <Button type="submit" className="w-full gap-2" disabled={mutation.isPending}>
