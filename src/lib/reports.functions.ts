@@ -5,11 +5,18 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 import { AiServiceError, generateSiwesReport } from "./ai-service.server";
 
-const GenerateInput = z.object({
-  department: z.string().trim().min(1, "Select your department").max(120),
-  reportType: z.enum(["daily", "weekly", "monthly"]),
-  notes: z.string().trim().min(10, "Add a little more detail").max(4000),
-});
+const GenerateInput = z
+  .object({
+    department: z.string().trim().min(1, "Select your department").max(120),
+    reportType: z.enum(["daily", "weekly", "monthly"]),
+    notes: z.string().trim().max(4000).optional(),
+    imageBase64: z.string().max(8_000_000).optional(),
+    imageMimeType: z.enum(["image/jpeg", "image/png", "image/webp"]).optional(),
+  })
+  .refine((val) => (val.notes && val.notes.length >= 10) || (val.imageBase64 && val.imageMimeType), {
+    message: "Add at least a little detail, or upload a photo of your notes",
+    path: ["notes"],
+  });
 
 export const generateReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
