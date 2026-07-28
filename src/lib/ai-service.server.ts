@@ -56,28 +56,56 @@ export class AiServiceError extends Error {
 export async function generateSiwesReport(input: {
   department: string;
   reportType: SiwesReportType;
-  notes: string;
+  notes?: string;
+  image?: { base64: string; mimeType: string };
 }): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     throw new AiServiceError("The AI service is not configured. Missing GEMINI_API_KEY.", 500);
   }
+  if (!input.notes?.trim() && !input.image) {
+    throw new AiServiceError("Add some notes or upload a photo of your notes.", 400);
+  }
 
   const google = createGoogleGenerativeAI({ apiKey });
+
+  const introLines = [
+    `Department: ${input.department}`,
+    `Report type: ${REPORT_TYPE_LABEL[input.reportType]}`,
+    "",
+  ];
 
   try {
     const { text } = await generateText({
       model: google(REPORT_MODEL),
       system: SIWES_SYSTEM_PROMPT,
-      prompt: [
-        `Department: ${input.department}`,
-        `Report type: ${REPORT_TYPE_LABEL[input.reportType]}`,
-        "",
-        "Student's rough notes:",
-        input.notes,
-      ].join("\n"),
+      messages: [
+        {
+          role: "user",
+          content: input.image
+            ? [
+                {
+                  type: "text" as const,
+                  text: [
+                    ...introLines,
+                    "The student's notes are handwritten (or typed) in the attached photo. Read the photo carefully first, then write the report exactly as instructed above, based only on what the photo actually says.",
+                    input.notes?.trim() ? `\nThe student also typed this extra context:\n${input.notes.trim()}` : "",
+                  ].join("\n"),
+                },
+                {
+                  type: "image" as const,
+                  image: `data:${input.image.mimeType};base64,${input.image.base64}`,
+                },
+              ]
+            : [
+                {
+                  type: "text" as const,
+                  text: [...introLines, "Student's rough notes:", input.notes ?? ""].join("\n"),
+                },
+              ],
+        },
+      ],
     });
-
     const output = text.trim();
     if (!output) {
       throw new AiServiceError("The AI returned an empty report. Please try again.", 502);
