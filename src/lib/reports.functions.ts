@@ -27,9 +27,17 @@ export const generateReport = createServerFn({ method: "POST" })
       throw new Error("Your account is not activated yet. Complete payment to start generating.");
     }
 
-    let output: string;
+   let output: string;
     try {
-      output = await generateSiwesReport(data);
+      output = await generateSiwesReport({
+        department: data.department,
+        reportType: data.reportType,
+        notes: data.notes,
+        image:
+          data.imageBase64 && data.imageMimeType
+            ? { base64: data.imageBase64, mimeType: data.imageMimeType }
+            : undefined,
+      });
     } catch (error) {
       if (error instanceof AiServiceError) throw new Error(error.message);
       throw error;
@@ -41,7 +49,7 @@ export const generateReport = createServerFn({ method: "POST" })
         user_id: userId,
         department: data.department,
         report_type: data.reportType,
-        original_text: data.notes,
+        original_text: data.notes?.trim() || "(submitted as a photo)",
         ai_output: output,
       })
       .select("id, ai_output, created_at")
