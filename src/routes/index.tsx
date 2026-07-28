@@ -59,36 +59,50 @@ export const Route = createFileRoute("/")({
 const FEATURES = [
   {
     icon: Wand2,
-    title: "AI report rewriting",
-    body: "Rough, half-formed notes become clear, well-structured English your supervisor will approve.",
+    title: "It actually rewrites, not just tidies",
+    body: "You know that feeling when you type something and it comes back sounding stiffer, not better? This doesn't do that. It keeps your voice, just cleaner.",
   },
   {
     icon: GraduationCap,
-    title: "Department-aware wording",
-    body: "Reports use the right technical vocabulary for your course, from Nursing to Mechanical Engineering.",
+    title: "Knows your course",
+    body: "Nursing entries don't read like Mechanical Engineering entries. Pick your department and the wording matches what your supervisor actually expects.",
   },
   {
     icon: Layers,
-    title: "Daily, weekly & monthly",
-    body: "Write a single day's entry or roll a whole week of activities into one professional summary.",
+    title: "Daily, weekly, whatever you need",
+    body: "Some placements want a line every day. Others want a Friday summary. Both work here.",
   },
   {
     icon: Clock3,
-    title: "Ready in seconds",
-    body: "No more staring at a blank logbook page. Type what you did and copy the finished entry.",
+    title: "Faster than staring at a blank page",
+    body: "You already did the work. This just gets it out of your head and into your logbook without the usual 20 minutes of \"how do I even start this sentence.\"",
   },
   {
     icon: BookOpenCheck,
-    title: "Saved report history",
-    body: "Every report you generate is stored in your account so you can revisit or reuse it any time.",
+    title: "Nothing gets lost",
+    body: "Every entry you write stays in your account. If your logbook gets rained on in week 6, your reports don't disappear with it.",
   },
   {
     icon: ShieldCheck,
-    title: "Honest, never invented",
-    body: "The AI only polishes what you actually did — it never fabricates activities or responsibilities.",
+    title: "It won't lie for you",
+    body: "If you didn't mention it, it doesn't go in. No made-up tasks, no exaggerated responsibilities — just your day, written properly.",
   },
 ];
 
+const STEPS = [
+  {
+    title: "Say what actually happened",
+    body: "Pidgin, half-sentences, no punctuation — doesn't matter. Type it the way it comes to you.",
+  },
+  {
+    title: "Pick your department and the format",
+    body: "One click. Daily entry or a weekly roll-up.",
+  },
+  {
+    title: "Copy it into your logbook",
+    body: "That's it. No editing needed, but you can tweak it if you want.",
+  },
+];
 const STEPS = [
   {
     title: "Enter your rough notes",
@@ -229,10 +243,10 @@ function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-                Everything you need for your logbook
+                Why this beats writing it yourself
               </h2>
               <p className="mt-3 text-muted-foreground">
-                Purpose-built for industrial training reporting — not a generic writing tool.
+               Not a generic AI tool wearing a SIWES costume. Built around one problem, and one problem only.
               </p>
             </div>
 
@@ -258,9 +272,9 @@ function LandingPage() {
         <section id="how-it-works" className="scroll-mt-20">
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold text-foreground sm:text-4xl">Three simple steps</h2>
+              <h2 className="text-3xl font-bold text-foreground sm:text-4xl">How it actually works</h2>
               <p className="mt-3 text-muted-foreground">
-                From blank page to finished entry in under a minute.
+                Three steps. No tutorial needed.
               </p>
             </div>
 
@@ -283,7 +297,7 @@ function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-20">
             <div className="mx-auto max-w-xl text-center">
               <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-                One payment. Lifetime access.
+                Pay once, use it till you're done with SIWES
               </h2>
               <p className="mt-3 text-muted-foreground">
                 No subscriptions, no hidden charges. Pay once and use it for your entire SIWES
@@ -354,10 +368,10 @@ function LandingPage() {
           <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
             <FileText className="mx-auto size-10 text-primary-foreground/80" />
             <h2 className="mt-4 text-3xl font-bold text-primary-foreground sm:text-4xl">
-              Your logbook is due. Let's get it done.
+              Logbook due again? Let's knock it out.
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-primary-foreground/85">
-              Join students who stopped dreading their SIWES reports.
+              Built by someone who was filling this same logbook not long ago.
             </p>
             <Button asChild size="lg" variant="secondary" className="mt-7">
               <Link to="/auth" search={{ mode: "signup", redirect: undefined }}>
