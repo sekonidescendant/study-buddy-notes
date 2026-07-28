@@ -275,7 +275,7 @@ function UpgradePage() {
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">
-                        ₦{Number(payment.amount).toLocaleString()} · {payment.transaction_ref}
+                        ₦{Number(payment.amount).toLocaleString()}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(payment.created_at).toLocaleDateString("en-NG", {
