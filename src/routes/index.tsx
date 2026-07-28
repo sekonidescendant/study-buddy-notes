@@ -103,20 +103,6 @@ const STEPS = [
     body: "That's it. No editing needed, but you can tweak it if you want.",
   },
 ];
-const STEPS = [
-  {
-    title: "Say what actually happened",
-    body: "Pidgin, half-sentences, no punctuation — doesn't matter. Type it the way it comes to you.",
-  },
-  {
-    title: "Pick your department and the format",
-    body: "One click. Daily entry or a weekly roll-up.",
-  },
-  {
-    title: "Copy it into your logbook",
-    body: "That's it. No editing needed, but you can tweak it if you want.",
-  },
-];
 const FALLBACK_FAQS = [
   {
     id: "f1",
