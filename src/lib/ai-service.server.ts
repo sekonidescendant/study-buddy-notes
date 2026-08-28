@@ -1,15 +1,19 @@
 /**
  * AI report-writing service.
  *
- * This is the ONLY module that knows which AI provider is used. To move from
- * Gemini to another model, change `REPORT_MODEL` below — nothing else in the
- * codebase needs to be touched.
+ * This is the ONLY module that knows which AI provider is used. Groq's free
+ * tier is used here (no card required). Groq's model lineup changes fairly
+ * often — if a model below gets deprecated, swap the constant, nothing else
+ * needs to change.
  */
 import { generateText } from "ai";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { createGroq } from "@ai-sdk/groq";
 
-// Google Gemini, called directly with your own Google AI Studio API key.
-const REPORT_MODEL = "gemini-flash-latest";
+// Used for plain typed-notes submissions (no image).
+const TEXT_MODEL = "openai/gpt-oss-120b";
+// Used only when a photo is attached — Groq's current multimodal model.
+// Note: Groq labels this a "preview" model, so watch for issues.
+const VISION_MODEL = "qwen/qwen3.6-27b";
 
 export type SiwesReportType = "daily" | "weekly" | "monthly";
 
@@ -59,15 +63,16 @@ export async function generateSiwesReport(input: {
   notes?: string;
   image?: { base64: string; mimeType: string };
 }): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    throw new AiServiceError("The AI service is not configured. Missing GEMINI_API_KEY.", 500);
+    throw new AiServiceError("The AI service is not configured. Missing GROQ_API_KEY.", 500);
   }
   if (!input.notes?.trim() && !input.image) {
     throw new AiServiceError("Add some notes or upload a photo of your notes.", 400);
   }
 
-  const google = createGoogleGenerativeAI({ apiKey });
+  const groq = createGroq({ apiKey });
+  const model = input.image ? VISION_MODEL : TEXT_MODEL;
 
   const introLines = [
     `Department: ${input.department}`,
@@ -77,7 +82,7 @@ export async function generateSiwesReport(input: {
 
   try {
     const { text } = await generateText({
-      model: google(REPORT_MODEL),
+      model: groq(model),
       system: SIWES_SYSTEM_PROMPT,
       messages: [
         {
@@ -117,7 +122,7 @@ export async function generateSiwesReport(input: {
     if (message.includes("429")) {
       throw new AiServiceError("Too many requests right now. Please wait a moment and try again.", 429);
     }
-    if (message.includes("402") || message.includes("RESOURCE_EXHAUSTED")) {
+    if (message.includes("402") || message.includes("insufficient_quota")) {
       throw new AiServiceError("AI quota has been exhausted. Please contact the administrator.", 402);
     }
     console.error("[ai-service] generation failed:", message);
