@@ -111,7 +111,7 @@ export async function generateSiwesReport(input: {
         },
       ],
     });
-    const output = text.trim();
+        const output = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
     if (!output) {
       throw new AiServiceError("The AI returned an empty report. Please try again.", 502);
     }
